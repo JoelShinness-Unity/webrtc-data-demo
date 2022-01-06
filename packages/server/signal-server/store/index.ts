@@ -1,4 +1,3 @@
-import { createStore } from "redux";
 import { BehaviorSubject, scan, Subject } from "rxjs";
 import { establishRoom, addUser, removeUser, removeRoom } from "./reducers";
 import { SignalServerState, SignalServerAction } from "./types";
@@ -20,5 +19,5 @@ export const store$ = new BehaviorSubject<[SignalServerState, SignalServerAction
 export const action$ = new Subject<SignalServerAction>();
 
 action$.pipe(
-  scan(([aggState], action) => [signalServerReducer(aggState, action), action], [initialState])
+  scan<SignalServerAction, [SignalServerState, SignalServerAction]>(([aggState], action) => [signalServerReducer(aggState, action), action], [initialState, undefined]),
 ).subscribe(store$);

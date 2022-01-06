@@ -1,8 +1,8 @@
 import { Request } from "express";
-import { EMPTY, endWith, filter, from, fromEvent, map, mapTo, merge, mergeMap, Observable, of, skipUntil, skipWhile, startWith, take, takeUntil } from "rxjs";
+import { EMPTY, endWith, fromEvent, map, merge, mergeMap, Observable, of, skipWhile, startWith, take, takeUntil } from "rxjs";
 import { RawData, WebSocket } from "ws";
 import { action$, store$ } from "./store";
-import { AddUserAction, SignalServerAction } from "./store/types";
+import { SignalServerAction } from "./store/types";
 import { makeId } from "./utils";
 
 export function wsHandler(ws:WebSocket, request:Request){
@@ -20,16 +20,18 @@ export function wsHandler(ws:WebSocket, request:Request){
     skipWhile(([,action]) => action !== firstAction),
     mergeMap(([state, action]) => {
       if('roomId' in action && action.roomId !== roomId) return EMPTY;
+
       if(action === firstAction){
         return of({
           type: 'CURRENT_USERS',
           userIds: Object.keys(state.rooms[roomId].users).filter(u => u !== userId)
         })
       }
-      if(action.type === "ADD_USER"){
-        return of({type: 'NEW_USER', userId: action.userId})
+      switch(action.type){
+        case 'ADD_USER': return of({type: 'NEW_USER', userId: action.userId});
+        case 'REMOVE_USER': return of({type: 'REMOVE_USER', userId: action.userId});
+        default: return EMPTY;
       }
-      return EMPTY;
     }),
     startWith({type: 'CONNECTED', roomId, userId}),
     map(msg => typeof msg === "string" ? msg : JSON.stringify(msg)),
@@ -49,7 +51,9 @@ export function wsHandler(ws:WebSocket, request:Request){
     endWith<SignalServerAction>({type: "REMOVE_USER", userId, roomId}),
   );
 
-  incomingAction$.subscribe(action$);
+  incomingAction$.subscribe({
+    next(x) { action$.next(x); }
+  });
   
 
 }
