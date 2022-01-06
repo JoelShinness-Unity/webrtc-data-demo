@@ -1,6 +1,6 @@
 export type RoomId = string;
 export type UserId = string;
-export type User = {};
+export type User = Record<string, never>;
 export type Room = {users:{[userId:UserId]:User}}
 
 export type SignalServerState = {
@@ -29,8 +29,17 @@ export type RemoveRoomAction = {
   roomId: RoomId
 }
 
+export type MakeOfferAction = {
+  type: 'MAKE_OFFER',
+  roomId: RoomId,
+  offerUserId: UserId,
+  recipientUserId: UserId
+}
+
 export type SignalServerAction = 
   | EstablishRoomAction 
   | AddUserAction 
   | RemoveUserAction 
-  | RemoveRoomAction;
+  | RemoveRoomAction
+  | MakeOfferAction;
+
