@@ -1,7 +1,10 @@
 export type RoomId = string;
 export type UserId = string;
-export type User = {};
-export type Room = {users:{[userId:UserId]:User}}
+export type User = Record<string, never>;
+
+export type Room = {
+  users:{[userId:UserId]:User},
+}
 
 export type SignalServerState = {
   rooms: {[roomId:RoomId]:Room},
@@ -24,13 +27,35 @@ export type RemoveUserAction = {
   userId: UserId
 }
 
-export type RemoveRoomAction = {
-  type: 'REMOVE_ROOM',
-  roomId: RoomId
+export type MakeOfferAction = {
+  type: 'MAKE_OFFER',
+  roomId: RoomId,
+  localUserId: UserId,
+  remoteUserId: UserId,
+  description:RTCSessionDescriptionInit
 }
+
+export type MakeAnswerAction = {
+  type: 'MAKE_ANSWER',
+  roomId: RoomId,
+  localUserId: UserId,
+  remoteUserId: UserId,
+  description:RTCSessionDescriptionInit
+}
+
+export type AddIceCandidateAction = {
+  type: 'ADD_ICE_CANDIDATE',
+  roomId: RoomId,
+  localUserId: UserId,
+  remoteUserId: UserId,
+  candidate: RTCIceCandidate,
+};
 
 export type SignalServerAction = 
   | EstablishRoomAction 
   | AddUserAction 
   | RemoveUserAction 
-  | RemoveRoomAction;
+  | MakeOfferAction
+  | MakeAnswerAction
+  | AddIceCandidateAction;
+

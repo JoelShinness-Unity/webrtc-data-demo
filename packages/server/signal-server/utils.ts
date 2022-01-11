@@ -1,9 +1,9 @@
-const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 export function makeId():string{
-  let output = "";
+  let output = '';
   for(let i = 0; i < 16; i++){
-    let letterIndex = Math.floor(Math.random() * alphabet.length);
+    const letterIndex = Math.floor(Math.random() * alphabet.length);
     output += alphabet[letterIndex];
   }
   return output;

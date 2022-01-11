@@ -4,17 +4,21 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"/>
+  <title>Websocket Demo</title>
 </head>
 <body>
-  <script>
-    const ws = new WebSocket('ws://localhost:3000?room-id=abcd');
-    ws.addEventListener('open', (e) => {
-      console.log('Open!', e);
-    })
-    ws.addEventListener('message', (e) => {
-      console.log('Message!', e);
-    })
-  </script>
+  <!-- <div class="container">
+    <h1>Websocket Demo</h1>
+    <h2>User Id: <span id="user-id"><em>Not found</em></span></h2>
+    <p>
+      <h2>Other Users</h2>
+      <ul id="user-list">
+
+      </ul>
+    </p>
+  </div> -->
+  <div id="root"></div>
+  <script src="./src/index.tsx" type="module"></script>
 </body>
 </html>
