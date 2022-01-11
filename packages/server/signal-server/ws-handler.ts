@@ -1,8 +1,13 @@
 import { Request } from 'express';
 import { EMPTY, endWith, fromEvent, map, merge, mergeMap, Observable, of, skipWhile, startWith, take, takeUntil } from 'rxjs';
-import { RawData, WebSocket } from 'ws';
+import { WebSocket } from 'ws';
 import { action$, store$ } from './store';
-import { SignalServerAction } from './store/types';
+import { 
+  AddIceCandidateAction, 
+  MakeAnswerAction, 
+  MakeOfferAction, 
+  SignalServerAction 
+} from './store/types';
 import { makeId } from './utils';
 
 export function wsHandler(ws:WebSocket, request:Request){
@@ -28,9 +33,27 @@ export function wsHandler(ws:WebSocket, request:Request){
         });
       }
       switch(action.type){
-      case 'ADD_USER': return of({type: 'NEW_USER', userId: action.userId});
-      case 'REMOVE_USER': return of({type: 'REMOVE_USER', userId: action.userId});
-      default: return EMPTY;
+        case 'ADD_USER': return of({type: 'NEW_USER', userId: action.userId});
+        case 'REMOVE_USER': return of({type: 'REMOVE_USER', userId: action.userId});
+        case 'MAKE_OFFER': {
+          if(action.remoteUserId === userId){
+            return of({type: 'RECEIVE_OFFER', userId: action.localUserId, description: action.description});
+          }
+          return EMPTY;
+        }
+        case 'MAKE_ANSWER': {
+          if(action.remoteUserId === userId){
+            return of({type: 'RECEIVE_ANSWER', userId: action.localUserId, description: action.description});
+          }
+          return EMPTY;
+        }
+        case 'ADD_ICE_CANDIDATE': {
+          if(action.remoteUserId === userId){
+            return of({type: 'RECEIVE_CANDIDATE', userId: action.localUserId, candidate: action.candidate});
+          }
+          return EMPTY;
+        }
+        default: return EMPTY;
       }
     }),
     startWith({type: 'CONNECTED', roomId, userId}),
@@ -39,11 +62,45 @@ export function wsHandler(ws:WebSocket, request:Request){
   outgoingMessage$.subscribe(msg => ws.send(msg));
 
   // Take incoming messages and create actions based on them.
-  const incomingMessage$ = fromEvent(ws, 'message') as Observable<RawData>;
+  const incomingMessage$ = fromEvent(ws, 'message') as Observable<MessageEvent>;
 
   const incomingAction$:Observable<SignalServerAction> = incomingMessage$.pipe(
-    mergeMap<RawData, Observable<SignalServerAction>>((/*msg*/) => {
-      // Put logic here
+    mergeMap<MessageEvent, Observable<SignalServerAction>>((msg) => {
+      try {
+        const msgObj = JSON.parse(msg.data.toString());
+        switch(msgObj.type){
+          case 'OFFER': {
+            if(!('userId' in msgObj) || !('description' in msgObj)) return EMPTY;
+            return of<MakeOfferAction>({
+              type: 'MAKE_OFFER', 
+              roomId, 
+              remoteUserId: msgObj.userId, 
+              localUserId: userId,
+              description: msgObj.description
+            });
+          }
+          case 'ANSWER': {
+            if(!('userId' in msgObj) || !('description' in msgObj)) return EMPTY;
+            return of<MakeAnswerAction>({
+              type: 'MAKE_ANSWER', 
+              roomId, 
+              remoteUserId: msgObj.userId, 
+              localUserId: userId,
+              description: msgObj.description
+            });
+          }
+          case 'CANDIDATE': {
+            if(!('userId' in msgObj) || !('candidate' in msgObj)) return EMPTY;
+            return of<AddIceCandidateAction>({
+              type: 'ADD_ICE_CANDIDATE',
+              roomId,
+              localUserId: userId,
+              remoteUserId: msgObj.userId,
+              candidate: msgObj.candidate
+            });
+          }
+        }
+      } catch(e){/* */}
       return EMPTY;
     }),
     takeUntil(closeEvent$),
@@ -54,6 +111,4 @@ export function wsHandler(ws:WebSocket, request:Request){
   incomingAction$.subscribe({
     next(x) { action$.next(x); }
   });
-  
-
 }
