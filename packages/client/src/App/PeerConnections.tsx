@@ -105,11 +105,11 @@ function PeerConnection({user, userMessage$, onMsg, localAudioStream}:PeerConnec
       takeUntil(close$),
     ).subscribe(() => { console.log('Connected!'); });
 
-    // fromEvent<RTCTrackEvent>(pc, 'track')
-    //   .pipe(takeUntil(close$))
-    //   .subscribe(e => { 
-    //     remoteAudioStream.addTrack(e.track);
-    //   });
+    fromEvent<RTCTrackEvent>(pc, 'track')
+      .pipe(takeUntil(close$))
+      .subscribe(e => { 
+        remoteAudioStream.addTrack(e.track);
+      });
 
     close$.pipe(take(1)).subscribe(() => pc.close());
 
